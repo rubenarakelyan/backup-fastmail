@@ -22,3 +22,7 @@ Run `ruby backup.rb backup-emails`. For each email, the script will download a e
 ## Errors
 
 Most errors are captured and presented with as much information as possible.
+
+## Acknowledgements
+
+Thanks to Nathan Grigg for the original Python script at <https://nathangrigg.com/2021/08/fastmail-backup/>.
