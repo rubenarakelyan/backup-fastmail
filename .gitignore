@@ -1,0 +1,3 @@
+backups/**
+!backups/.keep
+config.yaml

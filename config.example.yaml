@@ -1,0 +1,3 @@
+---
+fastmail_api_token: test
+backup_directory: "./backups"
