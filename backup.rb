@@ -58,7 +58,7 @@ class BackupFastmail < Thor
               "after" => emails_from.iso8601,
               "before" => emails_to.iso8601
             },
-            "limit" => 50
+            "limit" => 100
           },
           "0"
         ],
@@ -106,9 +106,18 @@ class BackupFastmail < Thor
     puts "Backing up #{emails.length} emails..."
     puts
 
-    emails.each do |email|
+    emails.each_with_index do |email, index|
       if email[:received_at] == emails_to
         puts "Skipping #{email[:id]} because it's at the end of the time window".green
+        puts
+        next
+      end
+
+      filename = "#{email[:received_at].to_i}_#{email[:id]}.eml"
+      filepath = "#{@config['backup_directory']}/#{filename}"
+
+      if File.exist?(filepath)
+        puts "Skipping #{email[:id]} because it already exists".green
         puts
         next
       end
@@ -122,8 +131,7 @@ class BackupFastmail < Thor
       response = @connection.get(download_url)
 
       if response.status == 200
-        filename = "#{email[:received_at].to_i}_#{email[:id]}.eml"
-        File.write("#{@config['backup_directory']}/#{filename}", response.body)
+        File.write(filepath, response.body)
         puts "Downloaded as #{filename}".green
       else
         puts "Received unexpected HTTP status #{response.status}".red
@@ -131,7 +139,7 @@ class BackupFastmail < Thor
       end
 
       puts
-      sleep 1 # try not to hit the rate limit
+      sleep (index % 100 == 0) ? 10 : 1 # try not to hit the rate limit
     end
 
     version_data["downloaded_until"] = emails_to
@@ -172,6 +180,7 @@ class BackupFastmail < Thor
       }
       @connection ||= Faraday.new(url: "https://api.fastmail.com", headers: headers) do |faraday|
         faraday.response :follow_redirects
+        faraday.options.timeout = 30
       end
     end
 
